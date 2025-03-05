@@ -2,8 +2,8 @@ name: Build
 
 on:
   push:
-    branches:
-      - master
+    # branches:
+      # - master
   pull_request:
 
 jobs:
@@ -12,10 +12,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        luaVersion: [ "5.4", "5.3", "5.2", "5.1", "luajit", "luajit-openresty" ]
-        platform: [ "ubuntu-22.04", "macos-14", "windows-2022" ]
+        luaVersion: [ "luajit", "luajit-openresty" ]
+        platform: [ "windows-2022" ]
+        # luaVersion: [ "5.4", "5.3", "5.2", "5.1", "luajit", "luajit-openresty" ]
+        # platform: [ "ubuntu-22.04", "macos-14", "windows-2022" ]
     runs-on: ${{ matrix.platform }}
     steps:
+      # - name: Use the MinGW C compiler shipped with Strawberry Perl
+      #   if: ${{ runner.os == 'Windows' }}
+      #   run: |
+      #     C:\msys64\usr\bin\bash -lc "pacman -S mingw-w64-ucrt-x86_64-cc mingw-w64-ucrt-x86_64-make --noconfirm"
+      #     Add-Content "${{ github.path }}" "C:\msys64\ucrt64\bin"
+
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup ’msvc’
@@ -27,11 +35,19 @@ jobs:
           luaVersion: ${{ matrix.luaVersion }}
       - name: Setup ‘luarocks’
         uses: luarocks/gh-actions-luarocks@v5
+
+      - name: "Config LuaRocks"
+        if: ${{ runner.os == 'Windows' && startsWith(matrix.luaVersion, 'luajit') }}
+        run: luarocks config lua_dir "${{ github.workspace }}\.lua"
+      
       - name: Make and install
         run: |
           luarocks make -- luasocket-scm-3.rockspec
         env:
           DEBUG: DEBUG
+      # - name: Make and install
+      #   run: |
+      #     luarocks install luasocket
       - name: Run regression tests
         shell: bash
         run: |
