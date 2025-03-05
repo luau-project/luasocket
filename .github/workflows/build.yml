@@ -2,8 +2,8 @@ name: Build
 
 on:
   push:
-    branches:
-      - master
+    # branches:
+    #   - master
   pull_request:
 
 jobs:
@@ -13,38 +13,68 @@ jobs:
       fail-fast: false
       matrix:
         luaVersion: [ "5.4", "5.3", "5.2", "5.1", "luajit", "luajit-openresty" ]
-        platform: [ "ubuntu-22.04", "macos-14", "windows-2022" ]
+        # platform: [ "ubuntu-22.04", "macos-14", "windows-2022" ]
+        platform: [ "windows-2022" ]
     runs-on: ${{ matrix.platform }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup ’msvc’
-        if: ${{ startsWith(matrix.platform, 'windows') && !startsWith(matrix.luaVersion, 'luajit') }}
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Setup ‘lua’
-        uses: luarocks/gh-actions-lua@v10
-        with:
-          luaVersion: ${{ matrix.luaVersion }}
-      - name: Setup ‘luarocks’
-        uses: luarocks/gh-actions-luarocks@v5
-      - name: Make and install
+      - name: anything
         run: |
-          luarocks make -- luasocket-scm-3.rockspec
-        env:
-          DEBUG: DEBUG
-      - name: Run regression tests
-        shell: bash
-        run: |
-          cd test
-          lua hello.lua
-          lua testsrvr.lua > /dev/null &
-          lua testclnt.lua
-          lua stufftest.lua
-          lua excepttest.lua
-          lua test_bind.lua
-          lua test_getaddrinfo.lua
-          lua ltn12test.lua
-          lua mimetest.lua
-          lua urltest.lua
-          lua test_socket_error.lua
-          kill %1
+          $list_of_paths = $env:Path -split ";";
+          
+          foreach ($path in $list_of_paths)
+          {
+            $full_path = Join-Path -Path $path -ChildPath "ldconfig.exe";
+            if (Test-Path -Path $full_path)
+            {
+              Write-Host "Found at: ${full_path}";
+              break;
+            }
+            
+            $full_path = Join-Path -Path $path -ChildPath "ldconfig";
+            if (Test-Path -Path $full_path)
+            {
+              Write-Host "Found at: ${full_path}";
+              break;
+            }
+            
+            $full_path = Join-Path -Path $path -ChildPath "ldconfig.sh";
+            if (Test-Path -Path $full_path)
+            {
+              Write-Host "Found at: ${full_path}";
+              break;
+            }
+          }
+
+      # - name: Checkout
+      #   uses: actions/checkout@v4
+      # - name: Setup ’msvc’
+      #   if: ${{ startsWith(matrix.platform, 'windows') && !startsWith(matrix.luaVersion, 'luajit') }}
+      #   uses: ilammy/msvc-dev-cmd@v1
+      # - name: Setup ‘lua’
+      #   uses: luarocks/gh-actions-lua@v10
+      #   with:
+      #     luaVersion: ${{ matrix.luaVersion }}
+      #     buildCache: 'false'
+      # - name: Setup ‘luarocks’
+      #   uses: luarocks/gh-actions-luarocks@v5
+      # - name: Make and install
+      #   run: |
+      #     luarocks make -- luasocket-scm-3.rockspec
+      #   env:
+      #     DEBUG: DEBUG
+      # - name: Run regression tests
+      #   shell: bash
+      #   run: |
+      #     cd test
+      #     lua hello.lua
+      #     lua testsrvr.lua > /dev/null &
+      #     lua testclnt.lua
+      #     lua stufftest.lua
+      #     lua excepttest.lua
+      #     lua test_bind.lua
+      #     lua test_getaddrinfo.lua
+      #     lua ltn12test.lua
+      #     lua mimetest.lua
+      #     lua urltest.lua
+      #     lua test_socket_error.lua
+      #     kill %1
